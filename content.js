@@ -43,12 +43,10 @@ xhr.open('GET', "https://msugrades.com/course/CSE/232", true);
 xhr.send();
 
 //Event listener for returning the page information
-xhr.addEventListener("readystatechange", processRequest, false);
-
 xhr.onreadystatechange = processRequest;
  
 //Function to run once the AJAX request returns
-function processRequest(e) {
+function processRequest() {
     //Check to ensure that the AJAX request returns with State "DONE" (value 4) and status 200
     if (xhr.readyState == 4 && xhr.status == 200) {
 
@@ -57,9 +55,19 @@ function processRequest(e) {
         //console.log(response);
 
         parser=new DOMParser();
-        htmlDoc=parser.parseFromString(response, "text/html");
-        test = document.getElementsByTagName("tr");  
-        console.log(test);
+        htmlDoc = parser.parseFromString(response, "text/html");
+
+        var container = htmlDoc.querySelector("#tab1");
+        var nameMatches = container.querySelectorAll("div.tab-pane.fade > h3");
+        var professorName = nameMatches[0].innerText;
+
+        var gradeMatches = container.querySelectorAll("div.tab-pane.fade > p > em");
+        var avgGPA = gradeMatches[0].innerText;
+        var medianGPA = gradeMatches[1].innerText;
+
+        console.log(professorName);
+        console.log(avgGPA);
+        console.log(medianGPA);
     }
 }
 
