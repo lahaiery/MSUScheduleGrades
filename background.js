@@ -1,7 +1,6 @@
 // JavaScript source code
 
-chrome.runtime.onInstalled.addListener(function () {
-    chrome.storage.sync.set({ color: '#3aa757' }, function () {
-        console.log("The color is green.");
-    });
-});
+//  ON UPDATED TABS
+//chrome.tabs.onUpdated.addListener(doTabUpdatedAction);
+
+//function doTabUpdatedAction()

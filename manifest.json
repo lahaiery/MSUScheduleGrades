@@ -2,7 +2,10 @@
   "name": "MSU Schedule Builder Koofers Extension",
   "version": "1.0",
   "description": "A chrome extension that automatically links koofers course and professor information pages to the associated link on the Michigan State Schedule Builder website.",
-  "permissions": [ "storage" ],
+  "permissions": [
+     "storage",
+     "https://msugrades.com/*"
+    ],
   "content_scripts": [
     {
       "css": [ "styles.css" ],
