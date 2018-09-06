@@ -1,41 +1,55 @@
 // JavaScript source code
 
-//var baseKoofersURL = "https://www.koofers.com/search?q=";
+var baseMSUGradesURL = "https://msugrades.com/course/"; //Base URL for all MSUgrades.com AJAX requests
 
-var baseMSUGradesURL = "https://msugrades.com/course/";
 
-//Queries the document to get the instructor name of the first course listed.
+//Parses Planner page for all professor names
+var professor = document.querySelectorAll('td[data-title="Instructor"]');
 
-//Can adjust which professor it selects by changing the array value 
-var professor = document.querySelectorAll(".instructor-name a")[0];
-var course = document.querySelectorAll(".section-number a")[0];
+//Parses Planner page for all course numbers
+var course = document.querySelectorAll('td[data-title="Course"]');
 
-//Stores the resulted text to the name variable
-var profName = professor.innerText;
-var courseName = course.innerText;
+//Create a new map to store associated course ID's and professor names
+var scheduleMap = new Map();
 
-//Prints out the name to the console for testing
+/*Loops over all courses parsed on the page and strips down the course ID into subject and course number
+also strips the professor name to first and last name. Adds each to an array, and sets the course array
+to the key in the map, and associated professor as the value to the key.
+*/
+for(i = 0; i < course.length; i++)
+{
+    //Stores the resulted course text to the Coursename variable
+    var courseName = course[i].innerText;
 
-var nameSplit = profName.split(".");
-var courseSplit = courseName.split(" ");
+    //Splits the course into subject and course number
+    var courseSplit = courseName.split(" ");
+    var subject = courseSplit[0].trim();
+    var courseNumber = courseSplit[1].trim();   
 
-//Removes all whitespace from a string
-//courseName = courseName.replace(/\s+/g, "");
+    //Stores the resulted professor text to the profName variable
+    var profName = professor[i].innerText;
 
-//Store the professor first and last name to variables
-var firstName = nameSplit[0].trim();
-var lastName = nameSplit[1].trim();
+    //Prints out the name to the console for testing
+    var lineSplit = profName.split("\n");
+    lineSplit = lineSplit[0].trim()
+    var nameSplit = lineSplit.split(".");
 
-//Store the subject code and course number of the class
-var subject = courseSplit[0].trim();
-var courseNumber = courseSplit[1].trim();
+    //Store the professor first and last name to variables
+    var firstName = nameSplit[0].trim();
+    var lastName = nameSplit[1].trim();
 
-//Testing name split accuracy
-console.log(subject);
-console.log(courseNumber);
-console.log(firstName);
-console.log(lastName);
+    //Create an array for the course and the professor containing subject, course number and first name, last name
+    var courseArr = [subject, courseNumber];
+    var nameArr = [firstName, lastName];
+    
+    //Adds the two arrays to a map, course ID is the key, professor name is value
+    scheduleMap.set(courseArr, nameArr);
+}
 
+//Tests values in map
+for (var [key, value] of scheduleMap.entries()) {
+    console.log(key + ' = ' + value);
+}
 
 //AJAX request to process the msu grades page containing course information
 var xhr = new XMLHttpRequest();
@@ -52,19 +66,32 @@ function processRequest() {
 
         //HTML Response of the AJAX Request, Need to parse the AJAX for the proper data***
         var response = xhr.responseText;
-        //console.log(response);
 
         parser=new DOMParser();
         htmlDoc = parser.parseFromString(response, "text/html");
 
+        //Number of rows in the table of the course page.
+        var i = 1;
+        //The id of the row of the table, given by "tab" + the row number (i)
+        var tabNumber = "tab" + string(i);
+
+        /*
+        INSERT CODE TO COUNT THE NUMBER OF ROWS IN THE TABLE AND BELOW CODE TO A FOR LOOP
+        ADD EACH PROFESSOR NAME AND GRADE DATA TO A MAP
+        LOOK INTO USING REGEX TAB* TO COUNT THE LENGTH
+        */
+
+        //Parses the professor name from the first column of the table
         var container = htmlDoc.querySelector("#tab1");
         var nameMatches = container.querySelectorAll("div.tab-pane.fade > h3");
         var professorName = nameMatches[0].innerText;
 
+        //Parses the average and median GPA from the second column of the table
         var gradeMatches = container.querySelectorAll("div.tab-pane.fade > p > em");
         var avgGPA = gradeMatches[0].innerText;
         var medianGPA = gradeMatches[1].innerText;
 
+        //Testing results of professor name, average GPA, and median GPA
         console.log(professorName);
         console.log(avgGPA);
         console.log(medianGPA);
