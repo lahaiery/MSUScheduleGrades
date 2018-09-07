@@ -13,12 +13,19 @@ var course = document.querySelectorAll('td[data-title="Course"]');
 var scheduleMap = new Map();
 
 //Inserts an Avg. GPA column in the schedule builder table
-var th  = document.createElement("th");
+var avg_th  = document.createElement("th");
 //Sets the inner HTML of the newly created th element
-th.innerHTML = 'Avg. GPA'
-th.id = "Th9";
+avg_th.innerHTML = 'Average GPA'
+avg_th.id = "Th9";
 var header = document.querySelector("#MainContent_UCEnrl_rptPlanner_trHeader > tr");
-header.appendChild(th);
+header.appendChild(avg_th);
+
+//Inserts an Avg. GPA column in the schedule builder table
+var median_th  = document.createElement("th");
+//Sets the inner HTML of the newly created th element
+median_th.innerHTML = 'Median GPA'
+median_th.id = "Th10";
+header.appendChild(median_th);
 
 /*Loops over all courses parsed on the page and strips down the course ID into subject and course number
 also strips the professor name to first and last name. Adds each to an array, and sets the course array
@@ -45,11 +52,12 @@ for(i = 0; i < course.length; i++)
     //Store the professor first and last name to variables
     var firstName = nameSplit[0].trim();
     var lastName = nameSplit[1].trim();
-    var gpa = "N/A";
+    let avgGpa = "N/A";
+    let medianGpa = "N/A";
 
     //Create an array for the course and the professor containing subject, course number and first name, last name
     var courseArr = [subject, courseNumber];
-    var nameArr = [firstName, lastName, gpa];
+    var nameArr = [firstName, lastName, avgGpa, medianGpa];
     
     //Adds the two arrays to a map, course ID is the key, professor name is value
     scheduleMap.set(courseArr, nameArr);
@@ -65,7 +73,6 @@ for (let [key] of scheduleMap.entries()) {
     };
 
     httpRequest.open('GET', baseMSUGradesURL + key[0] + "/" + key[1], true);
-    //console.log("REQUEST " + baseMSUGradesURL + key[0] + "/" + key[1]);
     httpRequest.send();
     ajaxCounter++;
 }
@@ -103,16 +110,11 @@ function processRequest(xhr, key) {
                 {
                     var avgGPA = gradeMatches[0].innerText;
                     var medianGPA = gradeMatches[1].innerText;
-                    //Testing results of professor name, average GPA, and median GPA   
-                    //console.log("INITIAL INFO:");
-                    //console.log(professorName);
-                    //console.log(scheduleMap.get(key)[1]);
+
                     if(professorName.toLowerCase().includes(scheduleMap.get(key)[1].toLowerCase()))
                     {
                         scheduleMap.get(key)[2] = avgGPA;
-                        console.log("PROFESSOR MATCH  " + professorName);
-                        console.log(avgGPA);
-                        console.log(medianGPA);                       
+                        scheduleMap.get(key)[3] = medianGPA;        
                     }
                 }       
             }
@@ -124,11 +126,6 @@ function processRequest(xhr, key) {
         ajaxCounter--;   
         if(ajaxCounter == 0)
         {
-            /*
-            for (var [key, value] of scheduleMap.entries()) {
-                console.log(key + ' = ' + value);
-            }
-            */
             insertHTML();
         }   
     }   
@@ -143,13 +140,21 @@ function insertHTML()
     let i =0;
     for (var value of scheduleMap.values()) 
     {
-        let td  = document.createElement("td");
+        let avg_td  = document.createElement("td");
         //Sets the inner HTML of the newly created td element to the average gpa from the scheduleMap
-        td.innerHTML = value[2];
-        td.id = "MainContent_UCEnrl_rptPlanner_tdGPA" + i;
-        td.className = "instructor-name";
-        let contentDiv = document.querySelector("#MainContent_UCEnrl_rptPlanner_trMeeting_" + i);
-        contentDiv.appendChild(td);
+        avg_td.innerHTML = value[2];
+        avg_td.id = "MainContent_UCEnrl_rptPlanner_tdAVGGPA" + i;
+        avg_td.className = "instructor-name";
+        let avgContentDiv = document.querySelector("#MainContent_UCEnrl_rptPlanner_trMeeting_" + i);
+        avgContentDiv.appendChild( avg_td);
+
+        let median_td  = document.createElement("td");
+        //Sets the inner HTML of the newly created td element to the median gpa from the scheduleMap
+        median_td.innerHTML = value[3];
+        median_td.id = "MainContent_UCEnrl_rptPlanner_tdMEDIANGPA" + i;
+        median_td.className = "instructor-name";
+        avgContentDiv.appendChild(median_td);
+        
         i++;
     }
 }
