@@ -2,7 +2,7 @@
   "name": "MSU Schedule Builder Koofers Extension",
   "version": "1.0",
   "web_accessible_resources": ["test.html"],
-  "description": "A chrome extension that automatically links koofers course and professor information pages to the associated link on the Michigan State Schedule Builder website.",
+  "description": "A chrome extension that links MSUGrades course and professor information pages to the associated link on the Michigan State Schedule Builder website.",
   "permissions": [
      "storage",
      "https://msugrades.com/*"
@@ -10,8 +10,13 @@
   "content_scripts": [
     {
       "css": [ "styles.css" ],
-      "js": [ "content.js" ],
-      "matches": [ "https://schedule.msu.edu/*" ]
+      "js": [ "contentPlanner.js" ],
+      "matches": [ "https://schedule.msu.edu/planner*" ]
+    },
+    {
+      "css": [ "styles.css" ],
+      "js": [ "contentSearch.js" ],
+      "matches": [ "https://schedule.msu.edu/default*" ]
     }
   ],
   "background": {
