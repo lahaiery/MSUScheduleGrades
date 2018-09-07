@@ -52,15 +52,28 @@ for (var [key, value] of scheduleMap.entries()) {
 }
 
 //AJAX request to process the msu grades page containing course information
-var xhr = new XMLHttpRequest();
-xhr.open('GET', "https://msugrades.com/course/CSE/232", true);
-xhr.send();
+//var xhr = new XMLHttpRequest();
+
+for (var [key] of scheduleMap.entries()) {
+    let httpRequest = new XMLHttpRequest();
+
+    httpRequest.onload = function(){ // when the request is loaded
+        processRequest(httpRequest);// we're calling our method
+    };
+
+    httpRequest.open('GET', baseMSUGradesURL + key[0] + "/" + key[1], true);
+    //console.log("REQUEST " + baseMSUGradesURL + key[0] + "/" + key[1]);
+    httpRequest.send();
+}
 
 //Event listener for returning the page information
-xhr.onreadystatechange = processRequest;
+//xhr.onreadystatechange = processRequest;
+
+//xhr.addEventListener("readystatechange", processRequest, false);
+
  
 //Function to run once the AJAX request returns
-function processRequest() {
+function processRequest(xhr) {
     //Check to ensure that the AJAX request returns with State "DONE" (value 4) and status 200
     if (xhr.readyState == 4 && xhr.status == 200) {
 
@@ -71,9 +84,9 @@ function processRequest() {
         htmlDoc = parser.parseFromString(response, "text/html");
 
         //Number of rows in the table of the course page.
-        var i = 1;
+        //var i = 1;
         //The id of the row of the table, given by "tab" + the row number (i)
-        var tabNumber = "tab" + string(i);
+        //var tabNumber = "tab" + string(i);
 
         /*
         INSERT CODE TO COUNT THE NUMBER OF ROWS IN THE TABLE AND BELOW CODE TO A FOR LOOP
