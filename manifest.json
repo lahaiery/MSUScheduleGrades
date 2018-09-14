@@ -5,13 +5,15 @@
   "description": "A chrome extension that links MSUGrades course and professor information pages to the associated link on the Michigan State Schedule Builder website.",
   "permissions": [
      "storage",
-     "https://msugrades.com/*"
+     "https://msugrades.com/*",
+     "tabs", 
+     "webNavigation"
     ],
   "content_scripts": [
     {
       "css": [ "styles.css" ],
       "js": [ "contentPlanner.js" ],
-      "matches": [ "https://schedule.msu.edu/planner*" ]
+      "matches": [ "https://schedule.msu.edu/planner*", "https://schedule.msu.edu/Planner*", "https://schedule.msu.edu/FullPlanner*"  ]
     },
     {
       "css": [ "styles.css" ],
