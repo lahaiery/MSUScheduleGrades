@@ -98,8 +98,9 @@ function processRequest(xhr, key) {
         {
             //Find the name of the professor in the entries
             let name = entry["Instructor"];
-
-            if(name.toLowerCase().includes(scheduleMap.get(key)[1].toLowerCase()))
+            
+            //Checks that professor name begins with correct initial, and that the last names matches the map entry
+            if(name.toLowerCase()[0] == scheduleMap.get(key)[0].toLowerCase() && name.toLowerCase().includes(scheduleMap.get(key)[1].toLowerCase()))
             {                              
                 //Ensure that Average GPA is a valid value in the JSON file
                 if(entry["Grades"]["AverageGPA"])
@@ -144,7 +145,7 @@ function insertHTML()
     {
         injectHTML(i, value[2], value[4]);
         injectHTML(i, value[3], value[4]);
-        
+
         //If there is more than one row for the course, insert extra empty rows to balance the table.
         if(value[5] > 1)
         {           
