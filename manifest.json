@@ -1,5 +1,5 @@
 {
-  "name": "MSU Schedule Builder Koofers Extension",
+  "name": "MSU Schedule Builder Grades Extension",
   "version": "1.0",
   "web_accessible_resources": ["test.html"],
   "description": "A chrome extension that links MSUGrades course and professor information pages to the associated link on the Michigan State Schedule Builder website.",

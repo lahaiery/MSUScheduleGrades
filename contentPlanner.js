@@ -13,50 +13,56 @@ const TABLE_HEADER_DOM = ".col-md-12.table-bordered.table-striped.table-condense
 var scheduleMap = new Map();
 
 
+
+
 //Parses Planner page for all professor names
-var professor = document.querySelectorAll('td[data-title="Instructor"]');
-
-//Parses Planner page for all course numbers
-var course = document.querySelectorAll('td[data-title="Course"]');
-
-var header = document.querySelector(TABLE_HEADER_DOM);
-addHeader("th", "Average GPA", "Th9", header)
-addHeader("th", "Median GPA", "Th10", header)
+var rows = document.querySelectorAll('tbody[class="course-data"]');
+console.log(rows.length)
 
 
-
-/*Loops over all courses parsed on the page and strips down the course ID into subject and course number
-also strips the professor name to first and last name. Adds each to an array, and sets the course array
-to the key in the map, and associated professor as the value to the key.
-*/
-for(i = 0; i < course.length; i++)
+/**
+ * Loops over all courses parsed on the page and strips down the course ID into subject and course number
+ * also strips the professor name to first and last name. Adds each to an array, and sets the course array
+ * to the key in the map, and associated professor as the value to the key.
+**/
+for(row of rows)
 {
-    //Stores the resulted course text to the Coursename variable
-    var courseName = course[i].innerText;
+    //Parses Planner page for all course numbers
+    let course = row.querySelectorAll('td[data-title="Course"]');
+
+    let professor = row.querySelectorAll('td[data-title="Instructor"]');
+    console.log(professor.length)
+
+    let courseName = course[0].innerText;
 
     //Splits the course into subject and course number
-    var courseSplit = courseName.split(" ");
-    var subject = courseSplit[0].trim();
-    var courseNumber = courseSplit[1].trim();   
+    let courseSplit = courseName.split(" ");
+    let subject = courseSplit[0].trim();
+    let courseNumber = courseSplit[1].trim();   
 
     //Stores the resulted professor text to the profName variable
-    var profName = professor[i].innerText;
+    let profName = professor[0].innerText;
 
     //Prints out the name to the console for testing
-    var lineSplit = profName.split("\n");
+    let lineSplit = profName.split("\n");
     lineSplit = lineSplit[0].trim()
-    var nameSplit = lineSplit.split(".");
+    let nameSplit = lineSplit.split(".");
 
-    //Store the professor first and last name to variables
-    var firstName = nameSplit[0].trim();
-    var lastName = nameSplit[1].trim();
+    //Store the professor first and last name to variables in the map
+    let firstName = nameSplit[0].trim();
+    let lastName = nameSplit[1].trim();
+
+    //Store the median and average gpa to variables in the map
     let avgGpa = "N/A";
     let medianGpa = "N/A";
+
+    //Store the msugrades.com link and the number of rows per course to the map
     let detailedLink = "";
+    let numProfs = professor.length
 
     //Create an array for the course and the professor containing subject, course number and first name, last name
-    var courseArr = [subject, courseNumber];
-    var nameArr = [firstName, lastName, avgGpa, medianGpa, detailedLink];
+    let courseArr = [subject, courseNumber];
+    let nameArr = [firstName, lastName, avgGpa, medianGpa, detailedLink, numProfs];
     
     //Adds the two arrays to a map, course ID is the key, professor name is value
     scheduleMap.set(courseArr, nameArr);
@@ -130,11 +136,22 @@ function processRequest(xhr, key) {
 **/
 function insertHTML()
 {
+    let header = document.querySelector(TABLE_HEADER_DOM);
+    addHeader("th", "Average GPA", "Th9", header)
+    addHeader("th", "Median GPA", "Th10", header)
     let i =0;
-    for (let [key, value] of scheduleMap.entries()) 
+    for (let value of scheduleMap.values()) 
     {
         injectHTML(i, value[2], value[4]);
         injectHTML(i, value[3], value[4]);
+        
+        //If there is more than one row for the course, insert extra empty rows to balance the table.
+        if(value[5] > 1)
+        {           
+            i++;   
+            injectHTML(i, " ", " ");   
+            injectHTML(i, " ", " ");       
+        }
         i++;
     }
 }
@@ -150,7 +167,8 @@ function injectHTML(i, gpa, link)
     //Creates a new td element for average/median grades with id and CSS class
     let td  = document.createElement("td");
     td.id = "MainContent_UCEnrl_rptPlanner_tdAVERAGEGPA" + i;
-    td.className = "instructor-name";   
+    td.className = "instructor-name";  
+    
 
     //Locates the appropriate div to inject the td into in the HTML and appends it as a child 
     let avgContentDiv = document.querySelector("#MainContent_UCEnrl_rptPlanner_trMeeting_" + i);
@@ -160,6 +178,7 @@ function injectHTML(i, gpa, link)
     }
     avgContentDiv.appendChild(td);
 
+    //If there was a gpa found for the professor, create an html a element to link to the msugrades.com page
     if(gpa != "N/A")
     {
         //Creates a new HTML a element
@@ -173,6 +192,7 @@ function injectHTML(i, gpa, link)
         a.innerText = gpa;   
         td.appendChild(a);
     }
+    //If there was no gpa found for the professor, do not insert a link
     else
     {
         td.innerText= gpa;
