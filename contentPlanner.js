@@ -1,4 +1,4 @@
-// JavaScript source code
+// Content Script that runs on the planner page of schedule.msu.edu
 
 //Base URL for all msugrades.com AJAX requests
 const BASE_MSUGRADES_URL = "https://msugrades.com/"; 
@@ -12,76 +12,85 @@ const TABLE_HEADER_DOM = ".col-md-12.table-bordered.table-striped.table-condense
 //Map to store associated course ID's, professor names, and grade data
 var scheduleMap = new Map();
 
+//Counter to track the number of outstanding AJAX calls not yet returned
+var ajaxCounter = 0;
 
-
-
-//Parses Planner page for all professor names
-var rows = document.querySelectorAll('tbody[class="course-data"]');
-console.log(rows.length)
-
+main();
 
 /**
- * Loops over all courses parsed on the page and strips down the course ID into subject and course number
- * also strips the professor name to first and last name. Adds each to an array, and sets the course array
- * to the key in the map, and associated professor as the value to the key.
-**/
-for(row of rows)
+ * Main function that parses schedule builder site, creates map of professors, and associated course information
+ */
+function main()
 {
-    //Parses Planner page for all course numbers
-    let course = row.querySelectorAll('td[data-title="Course"]');
 
-    let professor = row.querySelectorAll('td[data-title="Instructor"]');
-    console.log(professor.length)
+    scheduleMap.clear();
 
-    let courseName = course[0].innerText;
+    console.log(scheduleMap);
 
-    //Splits the course into subject and course number
-    let courseSplit = courseName.split(" ");
-    let subject = courseSplit[0].trim();
-    let courseNumber = courseSplit[1].trim();   
+    //Parses Planner page for all professor names
+    var rows = document.querySelectorAll('tbody[class="course-data"]');
 
-    //Stores the resulted professor text to the profName variable
-    let profName = professor[0].innerText;
+    /**
+     * Loops over all courses parsed on the page and strips down the course ID into subject and course number
+     * also strips the professor name to first and last name. Adds each to an array, and sets the course array
+     * to the key in the map, and associated professor as the value to the key.
+    **/
+    for(row of rows)
+    {
+        //Parses Planner page for all course numbers
+        let course = row.querySelectorAll('td[data-title="Course"]');
 
-    //Prints out the name to the console for testing
-    let lineSplit = profName.split("\n");
-    lineSplit = lineSplit[0].trim()
-    let nameSplit = lineSplit.split(".");
+        let professor = row.querySelectorAll('td[data-title="Instructor"]');
 
-    //Store the professor first and last name to variables in the map
-    let firstName = nameSplit[0].trim();
-    let lastName = nameSplit[1].trim();
+        let courseName = course[0].innerText;
 
-    //Store the median and average gpa to variables in the map
-    let avgGpa = "N/A";
-    let medianGpa = "N/A";
+        //Splits the course into subject and course number
+        let courseSplit = courseName.split(" ");
+        let subject = courseSplit[0].trim();
+        let courseNumber = courseSplit[1].trim();   
 
-    //Store the msugrades.com link and the number of rows per course to the map
-    let detailedLink = "";
-    let numProfs = professor.length
+        //Stores the resulted professor text to the profName variable
+        let profName = professor[0].innerText;
 
-    //Create an array for the course and the professor containing subject, course number and first name, last name
-    let courseArr = [subject, courseNumber];
-    let nameArr = [firstName, lastName, avgGpa, medianGpa, detailedLink, numProfs];
-    
-    //Adds the two arrays to a map, course ID is the key, professor name is value
-    scheduleMap.set(courseArr, nameArr);
+        //Prints out the name to the console for testing
+        let lineSplit = profName.split("\n");
+        lineSplit = lineSplit[0].trim()
+        let nameSplit = lineSplit.split(".");
+
+        //Store the professor first and last name to variables in the map
+        let firstName = nameSplit[0].trim();
+        let lastName = nameSplit[1].trim();
+
+        //Store the median and average gpa to variables in the map
+        let avgGpa = "N/A";
+        let medianGpa = "N/A";
+
+        //Store the msugrades.com link and the number of rows per course to the map
+        let detailedLink = "";
+        let numProfs = professor.length
+
+        //Create an array for the course and the professor containing subject, course number and first name, last name
+        let courseArr = [subject, courseNumber];
+        let nameArr = [firstName, lastName, avgGpa, medianGpa, detailedLink, numProfs];
+        
+        //Adds the two arrays to a map, course ID is the key, professor name is value
+        scheduleMap.set(courseArr, nameArr);
+    }
+
+    //AJAX request to process the msu grades page containing course information
+    for (let [key] of scheduleMap.entries()) {
+        let httpRequest = new XMLHttpRequest();
+
+        httpRequest.onload = function(){ // when the request is loaded
+            processRequest(httpRequest, key);// we're calling our method
+        };
+
+        httpRequest.open('GET', BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1], true);
+        httpRequest.send();
+        ajaxCounter++;
+    }
 }
 
-//AJAX request to process the msu grades page containing course information
-var ajaxCounter = 0;
-for (let [key] of scheduleMap.entries()) {
-    let httpRequest = new XMLHttpRequest();
-
-    httpRequest.onload = function(){ // when the request is loaded
-        processRequest(httpRequest, key);// we're calling our method
-    };
-
-    httpRequest.open('GET', BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1], true);
-    console.log(BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1])
-    httpRequest.send();
-    ajaxCounter++;
-}
     
 /** 
  *Function that runs after all AJAX calls are complete, parses through the returned JSON to find grade data. 
@@ -98,7 +107,7 @@ function processRequest(xhr, key) {
         {
             //Find the name of the professor in the entries
             let name = entry["Instructor"];
-            
+
             //Checks that professor name begins with correct initial, and that the last names matches the map entry
             if(name.toLowerCase()[0] == scheduleMap.get(key)[0].toLowerCase() && name.toLowerCase().includes(scheduleMap.get(key)[1].toLowerCase()))
             {                              
@@ -218,24 +227,28 @@ function addHeader(element, innerHTML, id, parent)
     parent.appendChild(newElement);
 }
 
+// Select the node that will be observed for mutations
+var targetNode = document.getElementById('MainContent_updpnl');
 
-//** TESTING WITH MUTATION OBSERVERS **//
+// Options for the observer (which mutations to observe)
+var config = { attributes: true, childList: true, subtree: true };
 
-/*
-MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+// Callback function to execute when mutations are observed
+var callback = function(mutationsList) {
+    for(var mutation of mutationsList) {
+        if (mutation.type == 'childList') {
+            if(mutation.target == targetNode)
+            {
+                //If the mutations are to the entire course table, a new semester has been selected
+                //Call main function to start parsing proccess over for new courses and professors.
+                main();
+            }
+        }
+    }
+};
 
-var observer = new MutationObserver(function(mutations, observer) {
-    console.log("TEST!");
-    main();
-    // Later, you can stop observing
-    observer.disconnect();
-});
+// Create an observer instance linked to the callback function
+var observer = new MutationObserver(callback);
 
-// define what element should be observed by the observer
-    // and what types of mutations trigger the callback
-    observer.observe(document, {
-        subtree: true,
-        attributes: true
-        //...
-    });
-*/
+// Start observing the target node for configured mutations
+observer.observe(targetNode, config);
