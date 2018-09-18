@@ -15,10 +15,10 @@ var scheduleMap = new Map();
 //Counter to track the number of outstanding AJAX calls not yet returned
 var ajaxCounter = 0;
 
-//Variable to keep track of how many courses are currently enrolled
+//Counter to keep track of how many courses are currently enrolled
 var enrlled = 0;
 
-//Variable to keep track of how many courses are currently planned
+//Counter to keep track of how many courses are currently planned
 var planned = 0;
 
 main();
@@ -31,30 +31,34 @@ function main()
 
     scheduleMap.clear();
 
+    //Parses Planner page for the Enrolled courses table
     var enrl = document.querySelector('#MainContent_divEnrolled');
 
+    //Parses Planner page for the Planned courses table
     var plan = document.querySelector('#MainContent_divPlanned');
 
-    //Parses Planner page for all professor names
+    //Parses Enrolled table for all course rows
     var rowsEnrl = enrl.querySelectorAll('tbody[class="course-data"]');
 
+    //Saves the number of courses that are enrolled to a variable
     enrlled = rowsEnrl.length;
 
-    //Parses Planner page for all professor names
+    //Parses Planned table for all course rows
     var rowsPlan = plan.querySelectorAll('tbody[class="course-data"]');
 
+    //Saves the number of courses that are planned to a variable
     planned = rowsPlan.length;
 
     /**
-     * Loops over all courses parsed on the page and strips down the course ID into subject and course number
-     * also strips the professor name to first and last name. Adds each to an array, and sets the course array
+     * Loops over all courses parsed on the enrolled and planned tables and calls function parse
+     * to strip down the course ID into subject and course number
+     * Also strips the professor name to first and last name. Adds each to an array, and sets the course array
      * to the key in the map, and associated professor as the value to the key.
     **/
     for(row of rowsEnrl)
     {
         parse(row, "enrl");
     }
-
     for(row of rowsPlan)
     {
         parse(row, "plan");
@@ -75,9 +79,9 @@ function main()
 }
 
 /**
- * 
- * @param {Object} row 
- * @param {string} tbl 
+ * Function that parses professor names, course id and number from the table and saves the information to scheduleMap
+ * @param {Object} row - the row of the table to parse through
+ * @param {string} tbl - the table the row is located in (enrolled or planned)
  */
 function parse(row, tbl)
 {
@@ -86,9 +90,10 @@ function parse(row, tbl)
 
     let professor = row.querySelectorAll('td[data-title="Instructor"]');
 
+    //Gets the course id (Ex: CSE, MTH, etc.)
     let courseName = course[0].innerText;
 
-    //Splits the course into subject and course number
+    //Splits the course into id (Ex: CSE, MTH, etc.) and course number (Ex: 100, 444, etc.)
     let courseSplit = courseName.split(" ");
     let subject = courseSplit[0].trim();
     let courseNumber = courseSplit[1].trim();   
@@ -96,9 +101,11 @@ function parse(row, tbl)
     //Stores the resulted professor text to the profName variable
     let profName = professor[0].innerText;
 
+    //Professor first and last names
     let firstName = "";
     let lastName = "";
 
+    //Checks if the professor's name is empty, if so do not attempt to split an empty string
     if(profName != "")
     {
         //Prints out the name to the console for testing
@@ -110,6 +117,7 @@ function parse(row, tbl)
         firstName = nameSplit[0].trim();
         lastName = nameSplit[1].trim();
     }
+
     //Store the median and average gpa to variables in the map
     let avgGpa = "N/A";
     let medianGpa = "N/A";
@@ -118,8 +126,11 @@ function parse(row, tbl)
     let detailedLink = "";
     let numProfs = professor.length
 
-    //Create an array for the course and the professor containing subject, course number and first name, last name
+    //Create an array for the course including id and number
     let courseArr = [subject, courseNumber];
+
+    //Create an array for the professor and other info including: first and last name, avg and median GPA, external link
+    //The number of professors listed under that course (row), and which table this course was listed under (Enrolled or Planned)
     let nameArr = [firstName, lastName, avgGpa, medianGpa, detailedLink, numProfs, tbl];
     
     //Adds the two arrays to a map, course ID is the key, professor name is value
@@ -135,7 +146,6 @@ function parse(row, tbl)
 function processRequest(xhr, key) {
     //Check to ensure that the AJAX request returns with State "DONE" (value 4) and status 200
     if (xhr.readyState == 4 && xhr.status == 200) {
-
         //HTML Response of the AJAX Request, Need to parse the AJAX for the proper data***
         var response = JSON.parse(xhr.responseText);
         for(let entry of (response["Entries"]))
@@ -163,11 +173,12 @@ function processRequest(xhr, key) {
                 //Set the associated value in the map to the link
                 scheduleMap.get(key)[4] = link;               
             }            
-        }
-        
-        //Once all AJAX calls have been processed, inject the html containing the retrieved data
+        }      
     }   
+    //Decerements the number of outstanding AJAX calls
     ajaxCounter--;   
+
+    //Once all AJAX calls have been processed, inject the html containing the retrieved data
     if(ajaxCounter == 0)
     {
         insertHTML();
@@ -181,14 +192,19 @@ function processRequest(xhr, key) {
 **/
 function insertHTML()
 {
+    //Finds the table header element for the enrolled and planned tables
     let header = document.querySelectorAll(TABLE_HEADER_DOM);
+
+    //Iterates over the table headers and insert new headers for Average GPA and Median GPA
     for(let k = 0; k < header.length; k++)
     {
+        //Checks that the enrolled table is not empty before inserting new headers
         if(k == 0 && enrlled > 0)
         {
             addHeader("th", "Average GPA", "Th9", header[k])
             addHeader("th", "Median GPA", "Th10", header[k])
         }
+        //Checks that the planned table is not empty before inserting new headers
         else if(k == 1 && planned > 0)
         {         
             addHeader("th", "Average GPA", "Th9", header[k])
@@ -196,44 +212,58 @@ function insertHTML()
 
             let plan = document.querySelector('#MainContent_divPlanned');
             let footer = plan.querySelectorAll("td.section-text")
+            //Adjusts the colSpan attribute of the section information row to account for the newly inserted columns
             for(footr of footer)
             {
                 footr.colSpan = "13";
             }
         }     
     }
-
+    //Counter for the current element in the enrolled table to be inserted
     let i = 0;
+    //Counter for the current element in the planned table to be inserted
     let j = 0;
+
+    //Iterates over each element in the scheduleMap and inserts the associated grade information into the table
     for (let value of scheduleMap.values()) 
     {
-        //If there is more than one row for the course, insert extra empty rows to balance the table.
+        //If the current entry should be inserted into the enrolled table
         if(value[6] == "enrl")
         {
+            //Injects two elements of HTML, one for the average gpa and one for the median gpa
             injectHTML(i, value[2], value[4], value[6]);
             injectHTML(i, value[3], value[4], value[6]);
     
+            //If there is more than one row for the course, insert extra empty rows to balance the table.
             if(value[5] > 1)
-            {           
-                i++;   
+            {       
+                //Iterate the counter to the next element    
+                i++;  
                 injectHTML(i, " ", " ", value[6]);   
                 injectHTML(i, " ", " ", value[6]);       
             }
+            //Iterate the counter to the next element
             i++;
         }
+
+        //If the current entry should be inserted into the planned table
         else if(value[6] == "plan")
         {
+            //Injects two elements of HTML, one for the average gpa and one for the median gpa
             injectHTML(j, value[2], value[4], value[6]);
-            injectHTML(j, value[3], value[4], value[6]);   
+            injectHTML(j, value[3], value[4], value[6]);  
+            
+            //If there is more than one row for the course, insert extra empty rows to balance the table.
             if(value[5] > 1)
-            {           
-                j++;   
+            {     
+                //Iterate the counter to the next element      
+                j++;                  
                 injectHTML(j, " ", " ", value[6]);   
                 injectHTML(j, " ", " ", value[6]);       
             }
+            //Iterate the counter to the next element
             j++;
-        }
-        
+        }        
     }
 }
 
@@ -302,14 +332,21 @@ function injectHTML(i, gpa, link, tbl)
 **/
 function addHeader(element, innerHTML, id, parent)
 {
+    //Creates a new HTML element with the provided type (element)
     let newElement  = document.createElement(element);
-    //Sets the inner HTML of the newly created element
+    //Sets the inner HTML of the newly created element (innerHTML)
     newElement.innerHTML = innerHTML
-    //Sets the ID of the newly created element
+    //Sets the ID of the newly created element (id)
     newElement.id = id
     //Appends the header to the parent in theDOM
     parent.appendChild(newElement);
 }
+
+
+/* This section of code sets up a mutation observer to observe for AJAX Post requests
+ * If a mutation is observed, the script runs the main function again to retrieve the new
+ * information posted to the page.
+*/
 
 // Select the node that will be observed for mutations
 var targetNode = document.getElementById('MainContent_updpnl');
