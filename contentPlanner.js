@@ -15,6 +15,12 @@ var scheduleMap = new Map();
 //Counter to track the number of outstanding AJAX calls not yet returned
 var ajaxCounter = 0;
 
+//Variable to keep track of how many courses are currently enrolled
+var enrlled = 0;
+
+//Variable to keep track of how many courses are currently planned
+var planned = 0;
+
 main();
 
 /**
@@ -25,56 +31,33 @@ function main()
 
     scheduleMap.clear();
 
-    console.log(scheduleMap);
+    var enrl = document.querySelector('#MainContent_divEnrolled');
+
+    var plan = document.querySelector('#MainContent_divPlanned');
 
     //Parses Planner page for all professor names
-    var rows = document.querySelectorAll('tbody[class="course-data"]');
+    var rowsEnrl = enrl.querySelectorAll('tbody[class="course-data"]');
+
+    enrlled = rowsEnrl.length;
+
+    //Parses Planner page for all professor names
+    var rowsPlan = plan.querySelectorAll('tbody[class="course-data"]');
+
+    planned = rowsPlan.length;
 
     /**
      * Loops over all courses parsed on the page and strips down the course ID into subject and course number
      * also strips the professor name to first and last name. Adds each to an array, and sets the course array
      * to the key in the map, and associated professor as the value to the key.
     **/
-    for(row of rows)
+    for(row of rowsEnrl)
     {
-        //Parses Planner page for all course numbers
-        let course = row.querySelectorAll('td[data-title="Course"]');
+        parse(row, "enrl");
+    }
 
-        let professor = row.querySelectorAll('td[data-title="Instructor"]');
-
-        let courseName = course[0].innerText;
-
-        //Splits the course into subject and course number
-        let courseSplit = courseName.split(" ");
-        let subject = courseSplit[0].trim();
-        let courseNumber = courseSplit[1].trim();   
-
-        //Stores the resulted professor text to the profName variable
-        let profName = professor[0].innerText;
-
-        //Prints out the name to the console for testing
-        let lineSplit = profName.split("\n");
-        lineSplit = lineSplit[0].trim()
-        let nameSplit = lineSplit.split(".");
-
-        //Store the professor first and last name to variables in the map
-        let firstName = nameSplit[0].trim();
-        let lastName = nameSplit[1].trim();
-
-        //Store the median and average gpa to variables in the map
-        let avgGpa = "N/A";
-        let medianGpa = "N/A";
-
-        //Store the msugrades.com link and the number of rows per course to the map
-        let detailedLink = "";
-        let numProfs = professor.length
-
-        //Create an array for the course and the professor containing subject, course number and first name, last name
-        let courseArr = [subject, courseNumber];
-        let nameArr = [firstName, lastName, avgGpa, medianGpa, detailedLink, numProfs];
-        
-        //Adds the two arrays to a map, course ID is the key, professor name is value
-        scheduleMap.set(courseArr, nameArr);
+    for(row of rowsPlan)
+    {
+        parse(row, "plan");
     }
 
     //AJAX request to process the msu grades page containing course information
@@ -89,6 +72,58 @@ function main()
         httpRequest.send();
         ajaxCounter++;
     }
+}
+
+/**
+ * 
+ * @param {Object} row 
+ * @param {string} tbl 
+ */
+function parse(row, tbl)
+{
+    //Parses Planner page for all course numbers
+    let course = row.querySelectorAll('td[data-title="Course"]');
+
+    let professor = row.querySelectorAll('td[data-title="Instructor"]');
+
+    let courseName = course[0].innerText;
+
+    //Splits the course into subject and course number
+    let courseSplit = courseName.split(" ");
+    let subject = courseSplit[0].trim();
+    let courseNumber = courseSplit[1].trim();   
+
+    //Stores the resulted professor text to the profName variable
+    let profName = professor[0].innerText;
+
+    let firstName = "";
+    let lastName = "";
+
+    if(profName != "")
+    {
+        //Prints out the name to the console for testing
+        let lineSplit = profName.split("\n");
+        lineSplit = lineSplit[0].trim()
+        let nameSplit = lineSplit.split(".");
+
+        //Store the professor first and last name to variables in the map
+        firstName = nameSplit[0].trim();
+        lastName = nameSplit[1].trim();
+    }
+    //Store the median and average gpa to variables in the map
+    let avgGpa = "N/A";
+    let medianGpa = "N/A";
+
+    //Store the msugrades.com link and the number of rows per course to the map
+    let detailedLink = "";
+    let numProfs = professor.length
+
+    //Create an array for the course and the professor containing subject, course number and first name, last name
+    let courseArr = [subject, courseNumber];
+    let nameArr = [firstName, lastName, avgGpa, medianGpa, detailedLink, numProfs, tbl];
+    
+    //Adds the two arrays to a map, course ID is the key, professor name is value
+    scheduleMap.set(courseArr, nameArr);
 }
 
     
@@ -131,11 +166,11 @@ function processRequest(xhr, key) {
         }
         
         //Once all AJAX calls have been processed, inject the html containing the retrieved data
-        ajaxCounter--;   
-        if(ajaxCounter == 0)
-        {
-            insertHTML();
-        }   
+    }   
+    ajaxCounter--;   
+    if(ajaxCounter == 0)
+    {
+        insertHTML();
     }         
 }
 
@@ -146,23 +181,59 @@ function processRequest(xhr, key) {
 **/
 function insertHTML()
 {
-    let header = document.querySelector(TABLE_HEADER_DOM);
-    addHeader("th", "Average GPA", "Th9", header)
-    addHeader("th", "Median GPA", "Th10", header)
-    let i =0;
+    let header = document.querySelectorAll(TABLE_HEADER_DOM);
+    for(let k = 0; k < header.length; k++)
+    {
+        if(k == 0 && enrlled > 0)
+        {
+            addHeader("th", "Average GPA", "Th9", header[k])
+            addHeader("th", "Median GPA", "Th10", header[k])
+        }
+        else if(k == 1 && planned > 0)
+        {         
+            addHeader("th", "Average GPA", "Th9", header[k])
+            addHeader("th", "Median GPA", "Th10", header[k])
+
+            let plan = document.querySelector('#MainContent_divPlanned');
+            let footer = plan.querySelectorAll("td.section-text")
+            for(footr of footer)
+            {
+                footr.colSpan = "13";
+            }
+        }     
+    }
+
+    let i = 0;
+    let j = 0;
     for (let value of scheduleMap.values()) 
     {
-        injectHTML(i, value[2], value[4]);
-        injectHTML(i, value[3], value[4]);
-
         //If there is more than one row for the course, insert extra empty rows to balance the table.
-        if(value[5] > 1)
-        {           
-            i++;   
-            injectHTML(i, " ", " ");   
-            injectHTML(i, " ", " ");       
+        if(value[6] == "enrl")
+        {
+            injectHTML(i, value[2], value[4], value[6]);
+            injectHTML(i, value[3], value[4], value[6]);
+    
+            if(value[5] > 1)
+            {           
+                i++;   
+                injectHTML(i, " ", " ", value[6]);   
+                injectHTML(i, " ", " ", value[6]);       
+            }
+            i++;
         }
-        i++;
+        else if(value[6] == "plan")
+        {
+            injectHTML(j, value[2], value[4], value[6]);
+            injectHTML(j, value[3], value[4], value[6]);   
+            if(value[5] > 1)
+            {           
+                j++;   
+                injectHTML(j, " ", " ", value[6]);   
+                injectHTML(j, " ", " ", value[6]);       
+            }
+            j++;
+        }
+        
     }
 }
 
@@ -172,20 +243,33 @@ function insertHTML()
  * @param {number} gpa - the gpa to insert, either average or median
  * @param {string} link - the link to the professor detail page on msugrades.com
 **/
-function injectHTML(i, gpa, link)
+function injectHTML(i, gpa, link, tbl)
 {
     //Creates a new td element for average/median grades with id and CSS class
-    let td  = document.createElement("td");
-    td.id = "MainContent_UCEnrl_rptPlanner_tdAVERAGEGPA" + i;
+    let td  = document.createElement("td");  
     td.className = "instructor-name";  
-    
 
-    //Locates the appropriate div to inject the td into in the HTML and appends it as a child 
-    let avgContentDiv = document.querySelector("#MainContent_UCEnrl_rptPlanner_trMeeting_" + i);
-    if(avgContentDiv == null)
+    let avgContentDiv = null;
+
+    if(tbl == "enrl")
     {
-        avgContentDiv = document.querySelector("#MainContent_UCEnrolled_rptPlanner_trMeeting_" + i);
+        td.id = "MainContent_UCEnrl_rptPlanner_tdAVERAGEGPA" + i;
+    
+        //Locates the appropriate div to inject the td into in the HTML and appends it as a child 
+        avgContentDiv = document.querySelector("#MainContent_UCEnrl_rptPlanner_trMeeting_" + i);
+        if(avgContentDiv == null)
+        {
+            avgContentDiv = document.querySelector("#MainContent_UCEnrolled_rptPlanner_trMeeting_" + i);
+        }
     }
+    else if(tbl == "plan")
+    {
+        td.id = "MainContent_UCPlan_rptPlanner_tdAVERAGEGPA" + i;
+
+        //Locates the appropriate div to inject the td into in the HTML and appends it as a child 
+        avgContentDiv = document.querySelector("#MainContent_UCPlan_rptPlanner_trMeeting_" + i);
+    }
+      
     avgContentDiv.appendChild(td);
 
     //If there was a gpa found for the professor, create an html a element to link to the msugrades.com page
@@ -222,7 +306,7 @@ function addHeader(element, innerHTML, id, parent)
     //Sets the inner HTML of the newly created element
     newElement.innerHTML = innerHTML
     //Sets the ID of the newly created element
-     newElement.id = id
+    newElement.id = id
     //Appends the header to the parent in theDOM
     parent.appendChild(newElement);
 }
