@@ -18,7 +18,7 @@
     {
       "css": [ "styles.css" ],
       "js": [ "contentSearch.js" ],
-      "matches": [ "https://schedule.msu.edu/default*" ]
+      "matches": [ "https://schedule.msu.edu/default*", "https://schedule.msu.edu/"  ]
     }
   ],
   "background": {

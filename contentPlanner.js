@@ -37,17 +37,23 @@ function main()
     //Parses Planner page for the Planned courses table
     var plan = document.querySelector('#MainContent_divPlanned');
 
-    //Parses Enrolled table for all course rows
-    var rowsEnrl = enrl.querySelectorAll('tbody[class="course-data"]');
-
-    //Saves the number of courses that are enrolled to a variable
-    enrlled = rowsEnrl.length;
-
-    //Parses Planned table for all course rows
-    var rowsPlan = plan.querySelectorAll('tbody[class="course-data"]');
-
-    //Saves the number of courses that are planned to a variable
+    var rowsEnrl = null;
+    if(enrl != null)
+    {
+        //Parses Enrolled table for all course rows
+        rowsEnrl = enrl.querySelectorAll('tbody[class="course-data"]');
+        //Saves the number of courses that are enrolled to a variable
+        enrlled = rowsEnrl.length;
+    }
+    
+    var rowsPlan = null;
+    if (plan != null)
+    {
+        //Parses Planned table for all course rows
+        rowsPlan = plan.querySelectorAll('tbody[class="course-data"]');
+        //Saves the number of courses that are planned to a variable
     planned = rowsPlan.length;
+    }
 
     /**
      * Loops over all courses parsed on the enrolled and planned tables and calls function parse
@@ -55,13 +61,19 @@ function main()
      * Also strips the professor name to first and last name. Adds each to an array, and sets the course array
      * to the key in the map, and associated professor as the value to the key.
     **/
-    for(row of rowsEnrl)
+    if(rowsEnrl != null)
     {
-        parse(row, "enrl");
+        for(row of rowsEnrl)
+        {
+            parse(row, "enrl");
+        }
     }
-    for(row of rowsPlan)
+    if(rowsPlan != null)
     {
-        parse(row, "plan");
+        for(row of rowsPlan)
+        {
+            parse(row, "plan");
+        }
     }
 
     //AJAX request to process the msu grades page containing course information
@@ -137,7 +149,6 @@ function parse(row, tbl)
     scheduleMap.set(courseArr, nameArr);
 }
 
-    
 /** 
  *Function that runs after all AJAX calls are complete, parses through the returned JSON to find grade data. 
  * @param {Object} xhr - index of row in the table
@@ -346,7 +357,6 @@ function addHeader(element, innerHTML, id, parent)
     parent.appendChild(newElement);
 }
 
-
 /* This section of code sets up a mutation observer to observe for AJAX Post requests
  * If a mutation is observed, the script runs the main function again to retrieve the new
  * information posted to the page.
@@ -366,6 +376,7 @@ if(targetNode != null)
             if (mutation.type == 'childList') {
                 if(mutation.target == targetNode)
                 {
+                    console.log("Test");
                     //If the mutations are to the entire course table, a new semester has been selected
                     //Call main function to start parsing proccess over for new courses and professors.
                     main();
