@@ -298,6 +298,10 @@ function injectHTML(i, gpa, link, tbl)
 
         //Locates the appropriate div to inject the td into in the HTML and appends it as a child 
         avgContentDiv = document.querySelector("#MainContent_UCPlan_rptPlanner_trMeeting_" + i);
+        if(avgContentDiv == null)
+        {
+            avgContentDiv = document.querySelector("#MainContent_UCPlanned_rptPlanner_trMeeting_" + i);
+        }
     }
       
     avgContentDiv.appendChild(td);
@@ -351,25 +355,28 @@ function addHeader(element, innerHTML, id, parent)
 // Select the node that will be observed for mutations
 var targetNode = document.getElementById('MainContent_updpnl');
 
-// Options for the observer (which mutations to observe)
-var config = { attributes: true, childList: true, subtree: true };
+if(targetNode != null)
+{
+    // Options for the observer (which mutations to observe)
+    var config = { attributes: true, childList: true, subtree: true };
 
-// Callback function to execute when mutations are observed
-var callback = function(mutationsList) {
-    for(var mutation of mutationsList) {
-        if (mutation.type == 'childList') {
-            if(mutation.target == targetNode)
-            {
-                //If the mutations are to the entire course table, a new semester has been selected
-                //Call main function to start parsing proccess over for new courses and professors.
-                main();
+    // Callback function to execute when mutations are observed
+    var callback = function(mutationsList) {
+        for(var mutation of mutationsList) {
+            if (mutation.type == 'childList') {
+                if(mutation.target == targetNode)
+                {
+                    //If the mutations are to the entire course table, a new semester has been selected
+                    //Call main function to start parsing proccess over for new courses and professors.
+                    main();
+                }
             }
         }
-    }
-};
+    };
 
-// Create an observer instance linked to the callback function
-var observer = new MutationObserver(callback);
+    // Create an observer instance linked to the callback function
+    var observer = new MutationObserver(callback);
 
-// Start observing the target node for configured mutations
-observer.observe(targetNode, config);
+    // Start observing the target node for configured mutations
+    observer.observe(targetNode, config);
+}
