@@ -71,7 +71,7 @@ function main()
         httpRequest.onload = function(){ // when the request is loaded
             processRequest(httpRequest, key);// we're calling our method
         };
-
+        
         httpRequest.open('GET', BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1], true);
         httpRequest.send();
         ajaxCounter++;

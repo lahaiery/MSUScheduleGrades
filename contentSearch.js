@@ -17,14 +17,13 @@ var scheduleMap = new Map();
 //Counter to track the number of outstanding AJAX calls not yet returned
 var ajaxCounter = 0;
 
-
 //Parses Planner page for all professor names
 var container = document.querySelector('#MainContent_divHeader1_va')
+
 var rows = container.querySelectorAll('.col-md-12.table-bordered.table-striped.table-condensed.course-results.cf');
+
 var courses = container.querySelectorAll('h3 > a');
 
-console.log(rows.length);
-console.log(courses.length);
 /**
  * Loops over all courses parsed on the page and strips down the course ID into subject and course number
  * also strips the professor name to first and last name. Adds each to an array, and sets the course array
@@ -33,12 +32,7 @@ console.log(courses.length);
 for(i = 0; i< courses.length; i++)
 {
     //Parses Planner page for all course numbers
-
-    //console.log(courses);
-
     let courseName = courses[i].innerText;
-
-    //console.log(courseName);
 
     //Splits the course into subject and course number
     let courseSplit = courseName.split(" ");
@@ -47,13 +41,9 @@ for(i = 0; i< courses.length; i++)
 
     let row = rows[i].querySelectorAll('tbody > tr.meeting-time');
 
-    //console.log(row.length);
-
     for(j = 0; j < row.length; j++)
     {
         let professor = row[j].querySelectorAll('td[data-title="Instructor"]');
-
-        console.log(professor.length);
 
         //Stores the resulted professor text to the profName variable
         let profName = professor[0].innerText;
@@ -69,8 +59,8 @@ for(i = 0; i< courses.length; i++)
             let nameSplit = lineSplit.split(".");
 
             //Store the professor first and last name to variables in the map
-            firstName = nameSplit[0].trim();
-            lastName = nameSplit[1].trim();
+            firstName = nameSplit[0].trim().toLowerCase();
+            lastName = nameSplit[1].trim().toLowerCase();
         }
 
         //Store the median and average gpa to variables in the map
@@ -89,7 +79,6 @@ for(i = 0; i< courses.length; i++)
         scheduleMap.set(courseArr, nameArr);
     }
 }
-    console.log(scheduleMap);
 
 let requestList = [];
 //AJAX request to process the msu grades page containing course information
@@ -99,25 +88,15 @@ for (let key of scheduleMap.keys()) {
     httpRequest.onload = function(){ // when the request is loaded
         processRequest(httpRequest, key);// we're calling our method
     };
-    /*
+    
     if(!(requestList.indexOf(BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1]) >= 0))
     {
         httpRequest.open('GET', BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1], true);
-        console.log(BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1]);
         httpRequest.send();
         requestList.push(BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1])
         ajaxCounter++;
     }  
-    */  
-
-    httpRequest.open('GET', BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1], true);
-    //console.log(BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1]);
-    httpRequest.send();
-    ajaxCounter++;
 }
-
-
-/** NEED TO CONVERT THIS TO SAVE ALL PROFESSOR DATA FROM JSON SO THAT MULTIPLE CALLS ARE NOT NECESSARY */
 
 /** 
  *Function that runs after all AJAX calls are complete, parses through the returned JSON to find grade data. 
@@ -128,34 +107,80 @@ function processRequest(xhr, key) {
     //Check to ensure that the AJAX request returns with State "DONE" (value 4) and status 200
     if (xhr.readyState == 4 && xhr.status == 200) {
         //HTML Response of the AJAX Request, Need to parse the AJAX for the proper data***
-        var response = JSON.parse(xhr.responseText);
+        let response = JSON.parse(xhr.responseText);
+        let profMap = new Map();
+        let profName = null;
+
         for(let entry of (response["Entries"]))
         {
             //Find the name of the professor in the entries
             let name = entry["Instructor"];
 
-            //Checks that professor name begins with correct initial, and that the last names matches the map entry
-            if(name.toLowerCase()[0] == scheduleMap.get(key)[0].toLowerCase() && name.toLowerCase().includes(scheduleMap.get(key)[1].toLowerCase()))
-            {                              
-                //Ensure that Average GPA is a valid value in the JSON file
-                if(entry["Grades"]["AverageGPA"])
+            let lineSplit = name.split("\n");
+            lineSplit = lineSplit[0].trim()
+            let nameSplit = lineSplit.split(" ");
+
+            let firstName = ""
+            let lastName = ""
+
+            //Store the professor first and last name to variables in the map
+            if(nameSplit.length == 2)
+            {
+                firstName = nameSplit[0].trim().toLowerCase();
+                lastName = nameSplit[1].trim().toLowerCase();
+            }
+            else if(nameSplit.length == 3)
+            {
+                firstName = nameSplit[0].trim().toLowerCase();
+                lastName = nameSplit[2].trim().toLowerCase();
+            }
+            profName = firstName[0] + " " + lastName;
+
+            let median = "N/A";
+            let average = "N/A";
+
+            //Ensure that Average GPA is a valid value in the JSON file
+            if(entry["Grades"]["AverageGPA"])
+            {
+                //Set the associated value in the map to the average GPA
+                average = entry["Grades"]["AverageGPA"].toFixed(2);
+            }
+            //Ensure that Median GPA is a valid value in the JSON file
+            if(entry["Grades"]["Median"])
+            {
+                //Set the associated value in the map to the median GPA
+                median = entry["Grades"]["Median"].toFixed(1) ;
+            }   
+            //Create a string representing the link to the detailed msugrades.com page for that professor
+            let link = "course/" + key[0] + "/" + key[1] + "/" + name.replace(/ /g, "_"); 
+
+            let data = [average, median, link];
+            profMap.set(profName, data);
+        }
+
+        for([course,info] of scheduleMap.entries())
+        {
+            //console.log(entry);
+            //console.log(entry[0] + " " + key);
+            if(course[0] == key[0] && course[1] == key[1])
+            {
+                //console.log("TEST");
+                nameArr = info[0] + " " + info[1];
+                let match = profMap.get(nameArr);
+                if(match != undefined)
                 {
                     //Set the associated value in the map to the average GPA
-                    scheduleMap.get(key)[2] = entry["Grades"]["AverageGPA"].toFixed(2);
-                }
-                //Ensure that Median GPA is a valid value in the JSON file
-                if(entry["Grades"]["Median"])
-                {
+                    info[2] = match[0];
+
                     //Set the associated value in the map to the median GPA
-                    scheduleMap.get(key)[3] = entry["Grades"]["Median"].toFixed(1) ;
-                }        
-                //Create a string representing the link to the detailed msugrades.com page for that professor
-                let link = "course/" + key[0] + "/" + key[1] + "/" + name.replace(/ /g, "_");   
-                //Set the associated value in the map to the link
-                scheduleMap.get(key)[4] = link;               
-            }            
-        }       
-        //Once all AJAX calls have been processed, inject the html containing the retrieved data               
+                    info[3] = match[1];
+
+                    //Set the associated value in the map to the link
+                    info[4] = match[2];
+                }               
+            }        
+        } 
+    //Once all AJAX calls have been processed, inject the html containing the retrieved data               
     } 
     ajaxCounter--;   
     if(ajaxCounter == 0)
