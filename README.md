@@ -10,7 +10,7 @@ way to compare professors GPA for specific courses directly on the schedule buil
 
 ## Acknowledgments
 
-Collin Dillinger - Creator of MSUGrades.com
+Collin Dillinger - Creator of https://msugrades.com/
 
 ## License
 MIT License
