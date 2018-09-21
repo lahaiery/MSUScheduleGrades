@@ -30,8 +30,6 @@ main();
  */
 function main()
 {
-    console.log("MAIN");
-
     container = document.querySelector('#MainContent_divHeader1_va');
 
     if(container != null)
@@ -39,9 +37,6 @@ function main()
         rows = container.querySelectorAll('.col-md-12.table-bordered.table-striped.table-condensed.course-results.cf');
         courses = container.querySelectorAll('h3 > a');
     }
-
-    console.log(rows);
-    console.log(courses);
 
     /**
      * Loops over all courses parsed on the page and strips down the course ID into subject and course number
@@ -59,44 +54,52 @@ function main()
             let subject = courseSplit[0].trim();
             let courseNumber = courseSplit[1].trim();   
 
-            let row = rows[i].querySelectorAll('tbody > tr.meeting-time');
-
+            let row = rows[i].querySelectorAll('tbody > tr');
             for(j = 0; j < row.length; j++)
             {
-                let professor = row[j].querySelectorAll('td[data-title="Instructor"]');
-
-                //Stores the resulted professor text to the profName variable
-                let profName = professor[0].innerText;
-
-                let firstName = ""
-                let lastName = ""
-
-                if(profName != "")
+                if(row[j].className == 'meeting-time')
                 {
-                    //Prints out the name to the console for testing
-                    let lineSplit = profName.split("\n");
-                    lineSplit = lineSplit[0].trim()
-                    let nameSplit = lineSplit.split(".");
+                    if(row[j-1].className != 'meeting-time')
+                    {
+                        let professor = row[j].querySelectorAll('td[data-title="Instructor"]');
 
-                    //Store the professor first and last name to variables in the map
-                    firstName = nameSplit[0].trim().toLowerCase();
-                    lastName = nameSplit[1].trim().toLowerCase();
-                }
+                        //Stores the resulted professor text to the profName variable
+                        let profName = professor[0].innerText;
 
-                //Store the median and average gpa to variables in the map
-                let avgGpa = "N/A";
-                let medianGpa = "N/A";
+                        let firstName = "";
+                        let lastName = "";
 
-                //Store the msugrades.com link and the number of rows per course to the map
-                let detailedLink = "";
-                let numProfs = professor.length
+                        if(profName != "")
+                        {
+                            //Prints out the name to the console for testing
+                            let lineSplit = profName.split("\n");
+                            lineSplit = lineSplit[0].trim()
+                            let nameSplit = lineSplit.split(".");
 
-                //Create an array for the course and the professor containing subject, course number and first name, last name
-                let courseArr = [subject, courseNumber];
-                let nameArr = [firstName, lastName, avgGpa, medianGpa, detailedLink, numProfs];
+                            //Store the professor first and last name to variables in the map
+                            firstName = nameSplit[0].trim().toLowerCase();
+                            lastName = nameSplit[1].trim().toLowerCase();
+                        }
 
-                //Adds the two arrays to a map, course ID is the key, professor name is value
-                scheduleMap.set(courseArr, nameArr);
+                        //Store the median and average gpa to variables in the map
+                        let avgGpa = "N/A";
+                        let medianGpa = "N/A";
+
+                        //Store the msugrades.com link and the number of rows per course to the map
+                        let detailedLink = "";
+                        let numProfs = 1
+                        if(j+1 < row.length && row[j+1].className == 'meeting-time')
+                        {
+                            numProfs = 2;
+                        }
+                        //Create an array for the course and the professor containing subject, course number and first name, last name
+                        let courseArr = [subject, courseNumber];
+                        let nameArr = [firstName, lastName, avgGpa, medianGpa, detailedLink, numProfs];
+
+                        //Adds the two arrays to a map, course ID is the key, professor name is value
+                        scheduleMap.set(courseArr, nameArr);
+                    }         
+                }              
             }
         }
 
@@ -318,8 +321,7 @@ var targetNode = document.getElementById('MainContent_updDropDowns');
 console.log(targetNode);
 
 if(targetNode != null)
-{
-   
+{ 
     // Options for the observer (which mutations to observe)
     var config = { attributes: true, childList: true, subtree: true };
 
@@ -329,7 +331,6 @@ if(targetNode != null)
             if (mutation.type == 'childList') {
                 if(mutation.target == targetNode)
                 {
-                    console.log("Test");
                     //If the mutations are to the entire course table, a new semester has been selected
                     //Call main function to start parsing proccess over for new courses and professors.
                     main();
@@ -337,7 +338,6 @@ if(targetNode != null)
             }
         }
     };
-
     // Create an observer instance linked to the callback function
     var observer = new MutationObserver(callback);
 
