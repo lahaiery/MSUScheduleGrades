@@ -4,10 +4,20 @@
 const BASE_MSUGRADES_URL = "https://msugrades.com/"; 
 
 //URL path to access msugrades.com API
-const API_URL = "/api/v1/course/"; 
+const API_URL = "api/v1/course/"; 
 
 //The class and child elements required to locate the table header DOM
 const TABLE_HEADER_DOM = ".col-md-12.table-bordered.table-striped.table-condensed.course-results.cf > thead > tr"; 
+
+//Constants to represent the index of information fields in an array
+const subjectIndex = 0;
+const courseNumberIndex = 1;
+const firstNameIndex = 0;
+const lastNameIndex = 1;
+const avgGPAIndex = 2;
+const medianGPAIndex = 3;
+const linkIndex = 4;
+const numProfsIndex = 5;
 
 //Map to store associated course ID's, professor names, and grade data
 var scheduleMap = new Map();
@@ -18,10 +28,13 @@ var ajaxCounter = 0;
 //Parses Planner page for all professor names
 var container = null; 
 
-//a collection of all course tables on the page
+//Collection of all course tables on the page
 var rows = null;
-//a collection of all course headings on the page
+//Collection of all course headings on the page
 var courses = null;
+
+//Counter to keep track of how many courses are currently enrolled
+var numCourses = 0;
 
 main();
 
@@ -36,15 +49,17 @@ function main()
     {
         rows = container.querySelectorAll('.col-md-12.table-bordered.table-striped.table-condensed.course-results.cf');
         courses = container.querySelectorAll('h3 > a');
+        numCourses = courses.length;
     }
-
+    
     /**
      * Loops over all courses parsed on the page and strips down the course ID into subject and course number
      * also strips the professor name to first and last name. Adds each to an array, and sets the course array
      * to the key in the map, and associated professor as the value to the key.
     **/
-    if(courses != null){
-        for(i = 0; i< courses.length; i++)
+    if(courses != null)
+    {
+        for(i = 0; i< numCourses; i++)
         {
             //Parses Planner page for all course numbers
             let courseName = courses[i].innerText;
@@ -71,7 +86,6 @@ function main()
 
                         if(profName != "")
                         {
-                            //Prints out the name to the console for testing
                             let lineSplit = profName.split("\n");
                             lineSplit = lineSplit[0].trim()
                             let nameSplit = lineSplit.split(".");
@@ -88,6 +102,7 @@ function main()
                         //Store the msugrades.com link and the number of rows per course to the map
                         let detailedLink = "";
                         let numProfs = 1
+                        //If there are two tr elements per course, only fill 1 with gpa
                         if(j+1 < row.length && row[j+1].className == 'meeting-time')
                         {
                             numProfs = 2;
@@ -99,39 +114,36 @@ function main()
                         //Adds the two arrays to a map, course ID is the key, professor name is value
                         scheduleMap.set(courseArr, nameArr);
                     }         
-                }              
+                }   
             }
-        }
-
-        let requestList = [];
-        //AJAX request to process the msu grades page containing course information
-        for (let key of scheduleMap.keys()) {
             let httpRequest = new XMLHttpRequest();
 
-            httpRequest.onload = function(){ // when the request is loaded
-                processRequest(httpRequest, key);// we're calling our method
+            httpRequest.onload = function() // when the request is loaded
+            { 
+                //Process the return of the AJAX request
+                processRequest(httpRequest, subject, courseNumber);
             };
-            
-            if(!(requestList.indexOf(BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1]) >= 0))
-            {
-                httpRequest.open('GET', BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1], true);
-                httpRequest.send();
-                requestList.push(BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1])
-                ajaxCounter++;
-            }  
+
+            httpRequest.open('GET', BASE_MSUGRADES_URL + API_URL + subject + "/" + courseNumber, true);
+            httpRequest.send();
+            ajaxCounter++;          
         }
     }
+    //Release memory
+    rows = null;
+    courses = null;
 }
-
 
 /** 
  *Function that runs after all AJAX calls are complete, parses through the returned JSON to find grade data. 
  * @param {Object} xhr - index of row in the table
  * @param {Object} key - the gpa to insert, either average or median
 **/
-function processRequest(xhr, key) {
+function processRequest(xhr, subject, courseNumber) 
+{
     //Check to ensure that the AJAX request returns with State "DONE" (value 4) and status 200
-    if (xhr.readyState == 4 && xhr.status == 200) {
+    if (xhr.readyState == 4 && xhr.status == 200) 
+    {
         //HTML Response of the AJAX Request, Need to parse the AJAX for the proper data***
         let response = JSON.parse(xhr.responseText);
         let profMap = new Map();
@@ -150,11 +162,13 @@ function processRequest(xhr, key) {
             let lastName = ""
 
             //Store the professor first and last name to variables in the map
+            //If there is no middle initial
             if(nameSplit.length == 2)
             {
                 firstName = nameSplit[0].trim().toLowerCase();
                 lastName = nameSplit[1].trim().toLowerCase();
             }
+            //If there is a middle initial
             else if(nameSplit.length == 3)
             {
                 firstName = nameSplit[0].trim().toLowerCase();
@@ -178,7 +192,7 @@ function processRequest(xhr, key) {
                 median = entry["Grades"]["Median"].toFixed(1) ;
             }   
             //Create a string representing the link to the detailed msugrades.com page for that professor
-            let link = "course/" + key[0] + "/" + key[1] + "/" + name.replace(/ /g, "_"); 
+            let link = "course/" + subject + "/" + courseNumber + "/" + name.replace(/ /g, "_"); 
 
             let data = [average, median, link];
             profMap.set(profName, data);
@@ -186,23 +200,18 @@ function processRequest(xhr, key) {
 
         for([course,info] of scheduleMap.entries())
         {
-            //console.log(entry);
-            //console.log(entry[0] + " " + key);
-            if(course[0] == key[0] && course[1] == key[1])
+            if(course[subjectIndex] == subject && course[courseNumberIndex] == courseNumber)
             {
-                //console.log("TEST");
-                nameArr = info[0] + " " + info[1];
+                nameArr = info[firstNameIndex] + " " + info[lastNameIndex];
                 let match = profMap.get(nameArr);
                 if(match != undefined)
                 {
                     //Set the associated value in the map to the average GPA
-                    info[2] = match[0];
-
+                    info[avgGPAIndex] = match[0];
                     //Set the associated value in the map to the median GPA
-                    info[3] = match[1];
-
+                    info[medianGPAIndex] = match[1];
                     //Set the associated value in the map to the link
-                    info[4] = match[2];
+                    info[link] = match[2];
                 }               
             }        
         } 
@@ -226,7 +235,7 @@ function insertHTML()
     let i =0;
 
     //Inserts header based on how many courses there are in the search results
-    for(j = 0; j< courses.length; j++)
+    for(j = 0; j< numCourses; j++)
     {
         addHeader("th", "Average GPA", header[j])
         addHeader("th", "Median GPA", header[j])
@@ -241,10 +250,9 @@ function insertHTML()
 
     //Injects grade html based on how many professors there are listed for each course
     for (let value of scheduleMap.values()) 
-    {
-        
-        injectHTML(i, value[2], value[4]);
-        injectHTML(i, value[3], value[4]);
+    {  
+        injectHTML(i, value[avgGPAIndex], value[linkIndex]);
+        injectHTML(i, value[medianGPAIndex], value[linkIndex]);
 
         //If there is more than one row for the course, insert extra empty rows to balance the table.
         if(value[5] > 1)
@@ -317,18 +325,18 @@ function addHeader(element, innerHTML, parent)
 
 // Select the node that will be observed for mutations
 var targetNode = document.getElementById('MainContent_updDropDowns');
-
-console.log(targetNode);
-
 if(targetNode != null)
 { 
     // Options for the observer (which mutations to observe)
     var config = { attributes: true, childList: true, subtree: true };
 
     // Callback function to execute when mutations are observed
-    var callback = function(mutationsList) {
-        for(var mutation of mutationsList) {
-            if (mutation.type == 'childList') {
+    var callback = function(mutationsList) 
+    {
+        for(var mutation of mutationsList) 
+        {
+            if (mutation.type == 'childList') 
+            {
                 if(mutation.target == targetNode)
                 {
                     //If the mutations are to the entire course table, a new semester has been selected

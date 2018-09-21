@@ -9,6 +9,17 @@ const API_URL = "/api/v1/course/";
 //The class and child elements required to locate the table header DOM
 const TABLE_HEADER_DOM = ".col-md-12.table-bordered.table-striped.table-condensed.course-results.cf > thead > tr"; 
 
+//Constants to represent the index of information fields in an array
+const subjectIndex = 0;
+const courseNumberIndex = 1;
+const firstNameIndex = 0;
+const lastNameIndex = 1;
+const avgGPAIndex = 2;
+const medianGPAIndex = 3;
+const linkIndex = 4;
+const numProfsIndex = 5;
+const tblIndex = 5;
+
 //Map to store associated course ID's, professor names, and grade data
 var scheduleMap = new Map();
 
@@ -52,7 +63,7 @@ function main()
         //Parses Planned table for all course rows
         rowsPlan = plan.querySelectorAll('tbody[class="course-data"]');
         //Saves the number of courses that are planned to a variable
-    planned = rowsPlan.length;
+        planned = rowsPlan.length;
     }
 
     /**
@@ -84,7 +95,7 @@ function main()
             processRequest(httpRequest, key);// we're calling our method
         };
         
-        httpRequest.open('GET', BASE_MSUGRADES_URL + API_URL + key[0] + "/" + key[1], true);
+        httpRequest.open('GET', BASE_MSUGRADES_URL + API_URL + key[subjectIndex] + "/" + key[courseNumberIndex], true);
         httpRequest.send();
         ajaxCounter++;
     }
@@ -103,12 +114,12 @@ function parse(row, tbl)
     let professor = row.querySelectorAll('td[data-title="Instructor"]');
 
     //Gets the course id (Ex: CSE, MTH, etc.)
-    let courseName = course[0].innerText;
+    let courseName = course[subjectIndex].innerText;
 
     //Splits the course into id (Ex: CSE, MTH, etc.) and course number (Ex: 100, 444, etc.)
     let courseSplit = courseName.split(" ");
-    let subject = courseSplit[0].trim();
-    let courseNumber = courseSplit[1].trim();   
+    let subject = courseSplit[subjectIndex].trim();
+    let courseNumber = courseSplit[courseNumberIndex].trim();   
 
     //Stores the resulted professor text to the profName variable
     let profName = professor[0].innerText;
@@ -126,8 +137,8 @@ function parse(row, tbl)
         let nameSplit = lineSplit.split(".");
 
         //Store the professor first and last name to variables in the map
-        firstName = nameSplit[0].trim();
-        lastName = nameSplit[1].trim();
+        firstName = nameSplit[firstNameIndex].trim();
+        lastName = nameSplit[lastNameIndex].trim();
     }
 
     //Store the median and average gpa to variables in the map
@@ -165,24 +176,25 @@ function processRequest(xhr, key) {
             let name = entry["Instructor"];
 
             //Checks that professor name begins with correct initial, and that the last names matches the map entry
-            if(name.toLowerCase()[0] == scheduleMap.get(key)[0].toLowerCase() && name.toLowerCase().includes(scheduleMap.get(key)[1].toLowerCase()))
+            if(name.toLowerCase()[firstNameIndex] == scheduleMap.get(key)[firstNameIndex].toLowerCase() 
+                && name.toLowerCase().includes(scheduleMap.get(key)[lastNameIndex].toLowerCase()))
             {                              
                 //Ensure that Average GPA is a valid value in the JSON file
                 if(entry["Grades"]["AverageGPA"])
                 {
                     //Set the associated value in the map to the average GPA
-                    scheduleMap.get(key)[2] = entry["Grades"]["AverageGPA"].toFixed(2);
+                    scheduleMap.get(key)[avgGPAIndex] = entry["Grades"]["AverageGPA"].toFixed(2);
                 }
                 //Ensure that Median GPA is a valid value in the JSON file
                 if(entry["Grades"]["Median"])
                 {
                     //Set the associated value in the map to the median GPA
-                    scheduleMap.get(key)[3] = entry["Grades"]["Median"].toFixed(1) ;
+                    scheduleMap.get(key)[medianGPAIndex] = entry["Grades"]["Median"].toFixed(1) ;
                 }        
                 //Create a string representing the link to the detailed msugrades.com page for that professor
-                var link = "course/" + key[0] + "/" + key[1] + "/" + name.replace(/ /g, "_");   
+                var link = "course/" + key[subjectIndex] + "/" + key[courseNumberIndex] + "/" + name.replace(/ /g, "_");   
                 //Set the associated value in the map to the link
-                scheduleMap.get(key)[4] = link;               
+                scheduleMap.get(key)[linkIndex] = link;               
             }            
         }      
     }   
@@ -239,38 +251,38 @@ function insertHTML()
     for (let value of scheduleMap.values()) 
     {
         //If the current entry should be inserted into the enrolled table
-        if(value[6] == "enrl")
+        if(value[tblIndex] == "enrl")
         {
             //Injects two elements of HTML, one for the average gpa and one for the median gpa
-            injectHTML(i, value[2], value[4], value[6]);
-            injectHTML(i, value[3], value[4], value[6]);
+            injectHTML(i, value[avgGPAIndex], value[linkIndex], value[tblIndex]);
+            injectHTML(i, value[medianGPAIndex], value[linkIndex], value[tblIndex]);
     
             //If there is more than one row for the course, insert extra empty rows to balance the table.
-            if(value[5] > 1)
+            if(value[numProfsIndex] > 1)
             {       
                 //Iterate the counter to the next element    
                 i++;  
-                injectHTML(i, " ", " ", value[6]);   
-                injectHTML(i, " ", " ", value[6]);       
+                injectHTML(i, " ", " ", value[tblIndex]);   
+                injectHTML(i, " ", " ", value[tblIndex]);       
             }
             //Iterate the counter to the next element
             i++;
         }
 
         //If the current entry should be inserted into the planned table
-        else if(value[6] == "plan")
+        else if(value[tblIndex] == "plan")
         {
             //Injects two elements of HTML, one for the average gpa and one for the median gpa
-            injectHTML(j, value[2], value[4], value[6]);
-            injectHTML(j, value[3], value[4], value[6]);  
+            injectHTML(j, value[avgGPAIndex], value[linkIndex], value[tblIndex]);
+            injectHTML(j, value[medianGPAIndex], value[linkIndex], value[tblIndex]); 
             
             //If there is more than one row for the course, insert extra empty rows to balance the table.
-            if(value[5] > 1)
+            if(value[numProfsIndex] > 1)
             {     
                 //Iterate the counter to the next element      
                 j++;                  
-                injectHTML(j, " ", " ", value[6]);   
-                injectHTML(j, " ", " ", value[6]);       
+                injectHTML(j, " ", " ", value[tblIndex]);   
+                injectHTML(j, " ", " ", value[tblIndex]);       
             }
             //Iterate the counter to the next element
             j++;
