@@ -211,7 +211,7 @@ function processRequest(xhr, subject, courseNumber)
                     //Set the associated value in the map to the median GPA
                     info[medianGPAIndex] = match[1];
                     //Set the associated value in the map to the link
-                    info[link] = match[2];
+                    info[linkIndex] = match[2];
                 }               
             }        
         } 

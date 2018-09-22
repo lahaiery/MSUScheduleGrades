@@ -18,7 +18,7 @@ const avgGPAIndex = 2;
 const medianGPAIndex = 3;
 const linkIndex = 4;
 const numProfsIndex = 5;
-const tblIndex = 5;
+const tblIndex = 6;
 
 //Map to store associated course ID's, professor names, and grade data
 var scheduleMap = new Map();
@@ -177,18 +177,18 @@ function processRequest(xhr, key) {
 
             //Checks that professor name begins with correct initial, and that the last names matches the map entry
             if(name.toLowerCase()[firstNameIndex] == scheduleMap.get(key)[firstNameIndex].toLowerCase() 
-                && name.toLowerCase().includes(scheduleMap.get(key)[lastNameIndex].toLowerCase()))
-            {                              
+            && name.toLowerCase().includes(scheduleMap.get(key)[lastNameIndex].toLowerCase()))
+            {                      
                 //Ensure that Average GPA is a valid value in the JSON file
                 if(entry["Grades"]["AverageGPA"])
                 {
-                    //Set the associated value in the map to the average GPA
+                    //Set the associated value in the map to the average GPA to 2 decmical places
                     scheduleMap.get(key)[avgGPAIndex] = entry["Grades"]["AverageGPA"].toFixed(2);
                 }
                 //Ensure that Median GPA is a valid value in the JSON file
                 if(entry["Grades"]["Median"])
                 {
-                    //Set the associated value in the map to the median GPA
+                    //Set the associated value in the map to the median GPA to 1 decimcal place
                     scheduleMap.get(key)[medianGPAIndex] = entry["Grades"]["Median"].toFixed(1) ;
                 }        
                 //Create a string representing the link to the detailed msugrades.com page for that professor
