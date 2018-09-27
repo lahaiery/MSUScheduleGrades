@@ -6,7 +6,9 @@ way to compare professors GPA for specific courses directly on the schedule buil
 
 ## Download
 
-[Click here to download MSU Schedule Grades](https://chrome.google.com/webstore/detail/msu-schedule-grades/akdnegfkalpdibnbihpgogmifhkaalje)
+[Google Chrome Download](https://chrome.google.com/webstore/detail/msu-schedule-grades/akdnegfkalpdibnbihpgogmifhkaalje)
+[Firefox Download](https://addons.mozilla.org/en-US/firefox/addon/msu-schedule-grades/)
+
 
 ## Author
 
