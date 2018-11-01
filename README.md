@@ -4,6 +4,13 @@ This is a Google Chrome extension that runs on the Michigan State University sch
 the external website msugrades.com, which provides grade information including median and average GPA for each course and professor. This extension provides a 
 way to compare professors GPA for specific courses directly on the schedule builder site.
 
+## Download
+
+[Google Chrome Download](https://chrome.google.com/webstore/detail/msu-schedule-grades/akdnegfkalpdibnbihpgogmifhkaalje)
+
+[Firefox Download](https://addons.mozilla.org/en-US/firefox/addon/msu-schedule-grades/)
+
+
 ## Author
 
 **Ryan LaHaie** - *Creator* - (https://github.com/lahaiery/)
