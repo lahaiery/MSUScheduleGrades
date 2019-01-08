@@ -188,16 +188,18 @@ function processRequest(xhr, coursesArray)
                 //Set the associated value in the map to the average GPA
                 average = prof["AverageGrade"].toFixed(2);
             }
+
             //Ensure that Median GPA is a valid value in the JSON file
             if(prof["MedianGrade"])
             {
                 //Set the associated value in the map to the median GPA
                 median = prof["MedianGrade"].toFixed(1) ;
             }   
+
             //Create a string representing the link to the detailed msugrades.com page for that professor
             let link = "course/" + subject + "/" + courseNumber + "/" + name.replace(/ /g, "_"); 
 
-            let data = [average, median, link];
+            let data = [average, median, link, subject, courseNumber];
             profMap.set(profName, data);
         }
 
@@ -207,14 +209,15 @@ function processRequest(xhr, coursesArray)
             {
                 nameArr = info[firstNameIndex] + " " + info[lastNameIndex];
                 let match = profMap.get(nameArr);
-                if(match != undefined)
-                {
-                    //Set the associated value in the map to the average GPA
-                    info[avgGPAIndex] = match[0];
-                    //Set the associated value in the map to the median GPA
-                    info[medianGPAIndex] = match[1];
-                    //Set the associated value in the map to the link
-                    info[linkIndex] = match[2];
+                if(match != undefined){
+                    if(match[3] == subject && match[4] == courseNumber){
+                        //Set the associated value in the map to the average GPA
+                        info[avgGPAIndex] = match[0];
+                        //Set the associated value in the map to the median GPA
+                        info[medianGPAIndex] = match[1];
+                        //Set the associated value in the map to the link
+                        info[linkIndex] = match[2];
+                    }
                 }               
             }        
         } 
