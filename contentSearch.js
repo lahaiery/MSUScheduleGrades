@@ -118,19 +118,10 @@ function main()
         }
     }
 
-    //Setup POST request to server to retrieve data
-    let httpRequest = new XMLHttpRequest();
-    httpRequest.open('POST', BASE_MSUGRADES_URL + API_URL, true);
-    httpRequest.setRequestHeader('Content-Type', "application/json");
-    httpRequest.onreadystatechange = function() // when the request is loaded
-    { 
-        //Check to ensure that the AJAX request returns with State "DONE" (value 4) and status 200
-        if (httpRequest.readyState == 4 && httpRequest.status == 200) 
-        {
-            processRequest(httpRequest, coursesArray);
-        }
-    };
-    httpRequest.send(JSON.stringify(coursesArray)); 
+    let url = BASE_MSUGRADES_URL + API_URL;
+    chrome.runtime.sendMessage({url: url, courses: coursesArray}, function(response) {
+        processRequest(response.responseJSON, coursesArray);
+    });
 
     //Release memory
     rows = null;
@@ -142,10 +133,9 @@ function main()
  * @param {Object} xhr - index of row in the table
  * @param {Object}coursesArray - Array of courses in the search page
 **/
-function processRequest(xhr, coursesArray) 
+function processRequest(response, coursesArray) 
 {
     //HTML Response of the AJAX Request, Need to parse the AJAX for the proper data***
-    let response = JSON.parse(xhr.responseText);
     let profMap = new Map();
     let profName = null;
 
