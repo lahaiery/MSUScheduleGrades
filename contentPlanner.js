@@ -282,59 +282,62 @@ function insertHTML()
         if(value[tblIndex] == "enrl")
         {
             //Injects two elements of HTML, one for the average gpa and one for the median gpa
-            injectHTML(i, value[avgGPAIndex], value[linkIndex], value[tblIndex]);
-            injectHTML(i, value[medianGPAIndex], value[linkIndex], value[tblIndex]);
+            injectHTML(i, value[avgGPAIndex], value[linkIndex], value[tblIndex], "Average GPA");
+            injectHTML(i, value[medianGPAIndex], value[linkIndex], value[tblIndex], "Median GPA");
     
             //If there is more than one row for the course, insert extra empty rows to balance the table.
             if(value[numProfsIndex] > 1)
             {       
                 //Iterate the counter to the next element    
                 i++;  
-                injectHTML(i, " ", " ", value[tblIndex]);   
-                injectHTML(i, " ", " ", value[tblIndex]);       
+                injectHTML(i, " ", " ", value[tblIndex], "");   
+                injectHTML(i, " ", " ", value[tblIndex], "");       
             }
             //Iterate the counter to the next element
             i++;
         }
 
-        //If the current entry should be inserted into the planned table
-        else if(value[tblIndex] == "plan")
-        {
-            //Injects two elements of HTML, one for the average gpa and one for the median gpa
-            injectHTML(j, value[avgGPAIndex], value[linkIndex], value[tblIndex]);
-            injectHTML(j, value[medianGPAIndex], value[linkIndex], value[tblIndex]); 
-            
-            //If there is more than one row for the course, insert extra empty rows to balance the table.
-            if(value[numProfsIndex] > 1)
-            {     
-                //Iterate the counter to the next element      
-                j++;                  
-                injectHTML(j, " ", " ", value[tblIndex]);   
-                injectHTML(j, " ", " ", value[tblIndex]);       
+                //If the current entry should be inserted into the planned table
+                else if(value[tblIndex] == "plan")
+                {
+                    //Injects two elements of HTML, one for the average gpa and one for the median gpa
+                    injectHTML(j, value[avgGPAIndex], value[linkIndex], value[tblIndex], "Average GPA");
+                    injectHTML(j, value[medianGPAIndex], value[linkIndex], value[tblIndex], "Median GPA"); 
+                    
+                    //If there is more than one row for the course, insert extra empty rows to balance the table.
+                    if(value[numProfsIndex] > 1)
+                    {     
+                        //Iterate the counter to the next element      
+                        j++;                  
+                        injectHTML(j, " ", " ", value[tblIndex], "");   
+                        injectHTML(j, " ", " ", value[tblIndex], "");       
+                    }
+                    //Iterate the counter to the next element
+                    j++;
+                }        
             }
-            //Iterate the counter to the next element
-            j++;
-        }        
-    }
-}
-
+        }
+        
 /**
  * Helper function that injects html given a gpa (either average or median) and a link to the MSUGrades page.
  * @param {number} i - index of row in the table
  * @param {number} gpa - the gpa to insert, either average or median
  * @param {string} link - the link to the professor detail page on msugrades.com
 **/
-function injectHTML(i, gpa, link, tbl)
+
+function injectHTML(i, gpa, link, tbl, dataTitle)
 {
     //Creates a new td element for average/median grades with id and CSS class
     let td  = document.createElement("td");  
     td.className = "instructor-name";  
+    td.setAttribute('data-title', dataTitle);
 
     let avgContentDiv = null;
 
     if(tbl == "enrl")
     {
         td.id = "MainContent_UCEnrl_rptPlanner_tdAVERAGEGPA" + i;
+        
     
         //Locates the appropriate div to inject the td into in the HTML and appends it as a child 
         avgContentDiv = document.querySelector("#MainContent_UCEnrl_rptPlanner_trMeeting_" + i);
@@ -354,7 +357,7 @@ function injectHTML(i, gpa, link, tbl)
             avgContentDiv = document.querySelector("#MainContent_UCPlanned_rptPlanner_trMeeting_" + i);
         }
     }
-      
+        
     avgContentDiv.appendChild(td);
 
     //If there was a gpa found for the professor, create an html a element to link to the msugrades.com page

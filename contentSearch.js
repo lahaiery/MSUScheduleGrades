@@ -242,15 +242,15 @@ function insertHTML()
     //Injects grade html based on how many professors there are listed for each course
     for (let value of scheduleMap.values()) 
     {  
-        injectHTML(i, value[avgGPAIndex], value[linkIndex]);
-        injectHTML(i, value[medianGPAIndex], value[linkIndex]);
+        injectHTML(i, value[avgGPAIndex], value[linkIndex], "Average GPA");
+        injectHTML(i, value[medianGPAIndex], value[linkIndex], "Median GPA");
 
         //If there is more than one row for the course, insert extra empty rows to balance the table.
         if(value[5] > 1)
         {           
             i++;   
-            injectHTML(i, " ", " ");   
-            injectHTML(i, " ", " ");       
+            injectHTML(i, " ", " ", "");   
+            injectHTML(i, " ", " ", "");       
         }
         i++;
     }
@@ -262,11 +262,12 @@ function insertHTML()
  * @param {number} gpa - the gpa to insert, either average or median
  * @param {string} link - the link to the professor detail page on msugrades.com
 **/
-function injectHTML(i, gpa, link)
+function injectHTML(i, gpa, link, dataTitle)
 {
     //Creates a new td element for average/median grades with id and CSS class
     let td  = document.createElement("td");
     td.className = "instructor-name"; 
+    td.setAttribute('data-title', dataTitle);
     
     //Locates the appropriate div to inject the td into in the HTML and appends it as a child 
     let avgContentDiv = document.querySelectorAll("tr.meeting-time");
